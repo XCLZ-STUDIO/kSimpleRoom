@@ -2,27 +2,29 @@ package tech.xclz
 
 import io.ktor.network.sockets.*
 import io.ktor.utils.io.*
-
+import tech.xclz.PlayerState.*
+import tech.xclz.PlayerAction.*
+import tech.xclz.DefaultState.*
 
 val playerStateMachine = buildStateMachine {
-    "*" by {
-        "connect" goto "NotInRoom"
+    Start by {
+        connect goto NotInRoom
     }
 
-    "NotInRoom" by {
-        "create" goto "Manager"
-        "join" goto "Member"
-        "disconnect" goto "*"
+    NotInRoom by {
+        create goto Manager
+        join goto Member
+        disconnect goto End
     }
 
-    "Manager" by {
-        "leave" goto "NotInRoom"
-        "disconnect" goto "ManagerIDLE"
+    Manager by {
+        leave goto NotInRoom
+        disconnect goto ManagerIDLE
     }
 
-    "Member" by {
-        "leave" goto "NotInRoom"
-        "disconnect" goto "MemberIDLE"
+    Member by {
+        leave goto NotInRoom
+        disconnect goto MemberIDLE
     }
 }
 
@@ -40,7 +42,7 @@ class ClientSession(
         this.player = server.player(deviceId).also { player ->
             player.bindSession(this)
         }
-        state.on("connect")
+        state.on(connect)
     }
 
     fun createRoom() {
@@ -53,7 +55,7 @@ class ClientSession(
             it.room = room
         }
 
-        state.on("create")
+        state.on(create)
     }
 
     fun joinRoom(code: RoomID) {
@@ -63,7 +65,7 @@ class ClientSession(
                 it.addPlayer(player)
             }
         }
-        state.on("join")
+        state.on(join)
     }
 
     fun leaveRoom() {
@@ -71,6 +73,6 @@ class ClientSession(
             player.room?.removePlayer(player)
             player.room = null
         }
-        state.on("leave")
+        state.on(leave)
     }
 }
