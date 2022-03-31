@@ -2,6 +2,7 @@ import io.ktor.network.selector.*
 import io.ktor.network.sockets.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.*
+import tech.xclz.ClientSession
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
 import kotlin.reflect.KClass
@@ -42,13 +43,43 @@ suspend fun ByteReadChannel.readString(size: Int, charset: Charset = Charsets.UT
 annotation class Route(val cmd: CommandID)
 
 abstract class Router {
-    val commands: MutableMap<CommandID, KFunction<*>> = mutableMapOf()
+    private val commands: MutableMap<CommandID, KFunction<*>> = mutableMapOf()
 
     init {
         val clazz = this::class
         for (function in clazz.declaredMemberFunctions) {
             function.findAnnotation<Route>()?.let {
                 commands[it.cmd] = function
+            }
+        }
+    }
+
+    suspend fun dispatch(session: ClientSession, cmd: CommandID) {
+        commands[cmd]?.let { function ->
+            val instanceParam = function.instanceParameter ?: return@let
+            val arguments = mutableMapOf<KParameter, Any>(
+                instanceParam to TCPRouter
+            )
+
+            for (parameter in function.valueParameters) {
+                val type = parameter.type.classifier as KClass<*>
+                val value: Any = when (type) {
+                    ByteReadChannel::class -> session.receiveChannel
+                    UShort::class -> session.receiveChannel.readUShort()
+                    UInt::class -> session.receiveChannel.readUInt()
+                    String::class -> session.receiveChannel.readString(session.receiveChannel.readInt())
+                    else -> throw IllegalArgumentException("Unsupported type: $type")
+                }
+                arguments[parameter] = value
+            }
+
+            val result = function.callSuspendBy(arguments)
+            val type = function.returnType.classifier as KClass<*>
+            when (type) {
+                Int::class -> session.sendChannel.writeInt(result as Int)
+                UShort::class -> session.sendChannel.writeUShort(result as UShort)
+                String::class -> session.sendChannel.writeString(result as String)
+                else -> throw IllegalArgumentException("Unsupported type: $type")
             }
         }
     }
@@ -76,38 +107,13 @@ class RoomServer(// 构造函数
             CoroutineScope(currentCoroutineContext()).launch {
                 val receiveChannel = socket.openReadChannel()
                 val sendChannel = socket.openWriteChannel(autoFlush = true)
+                val session = ClientSession(socket, receiveChannel, sendChannel)
 
                 while (true) {
                     val id = receiveChannel.readUShort()
                     val cmd = CommandID.from(id)
 
-                    TCPRouter.commands[cmd]?.let { function ->
-                        val instanceParam = function.instanceParameter ?: return@let
-                        val arguments = mutableMapOf<KParameter, Any>(
-                            instanceParam to TCPRouter
-                        )
-
-                        for (parameter in function.valueParameters) {
-                            val type = parameter.type.classifier as KClass<*>
-                            val value: Any = when (type) {
-                                ByteReadChannel::class -> receiveChannel
-                                UShort::class -> receiveChannel.readUShort()
-                                UInt::class -> receiveChannel.readUInt()
-                                String::class -> receiveChannel.readString(receiveChannel.readInt())
-                                else -> throw IllegalArgumentException("Unsupported type: $type")
-                            }
-                            arguments[parameter] = value
-                        }
-
-                        val result = function.callSuspendBy(arguments)
-                        val type = function.returnType.classifier as KClass<*>
-                        when (type) {
-                            Int::class -> sendChannel.writeInt(result as Int)
-                            UShort::class -> sendChannel.writeUShort(result as UShort)
-                            String::class -> sendChannel.writeString(result as String)
-                            else -> throw IllegalArgumentException("Unsupported type: $type")
-                        }
-                    }
+                    TCPRouter.dispatch(session, cmd)
                 }
             }
         }
