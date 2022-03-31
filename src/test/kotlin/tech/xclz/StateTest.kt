@@ -33,16 +33,17 @@ class StateTest {
                 "断开连接" goto "成员待恢复连接"
             }
         }
-        assertEquals("*", machine.state.name)
-        machine.on("建立连接")
-        assertEquals("未加入房间", machine.state.name)
-        machine.on("创建房间")
-        assertEquals("房主", machine.state.name)
-        machine.on("退出房间")
-        assertEquals("未加入房间", machine.state.name)
-        machine.on("加入房间")
-        assertEquals("成员", machine.state.name)
-        machine.on("断开连接")
-        assertEquals("成员待恢复连接", machine.state.name)
+        var state = machine.initState
+        assertEquals("*", state.name)
+        state = state.on("建立连接")
+        assertEquals("未加入房间", state.name)
+        state = state.on("创建房间")
+        assertEquals("房主", state.name)
+        state = state.on("退出房间")
+        assertEquals("未加入房间", state.name)
+        state = state.on("加入房间")
+        assertEquals("成员", state.name)
+        state = state.on("断开连接")
+        assertEquals("成员待恢复连接", state.name)
     }
 }
