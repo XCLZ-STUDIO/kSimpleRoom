@@ -11,8 +11,7 @@ class RoomServer(// 构造函数
     val rooms = mutableMapOf<String, Room>()
 
     fun room(code: String) = rooms[code] ?: Room(code).also { rooms[code] = it }
-    fun player(deviceId: String) =
-        players[deviceId] ?: Player(this, deviceId).also { players[deviceId] = it }
+    fun player(deviceId: String) = players[deviceId] ?: Player(deviceId).also { players[deviceId] = it }
 
     suspend fun start() {
         val selectorManager = ActorSelectorManager(Dispatchers.IO)

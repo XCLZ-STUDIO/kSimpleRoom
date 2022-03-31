@@ -10,7 +10,9 @@ enum class CommandID(val id: UShort) {
     Version(0x0001u),
     CreateRoom(0x0002u),
     JoinRoom(0x0003u),
-    LeaveRoom(0x0004u);
+    LeaveRoom(0x0004u),
+    PlayNote(0x0005u),
+    StopNote(0x0006u);
 
     companion object {
         fun from(value: UShort) = values().first { it.id == value }
@@ -71,25 +73,25 @@ object TCPRouter : Router() {
         if (deviceId in session.server.players) {
             TODO("Already in room, ready to recover the connection")
         }
-        session.player(deviceId)    //bind player to session
+        session.connect(deviceId)    //bind player to session
         return SERVER_VERSION
     }
 
     @Route(CommandID.CreateRoom)
     suspend fun createRoom(session: ClientSession, roomId: String): Boolean {
-        session.player?.createRoom()    //FIXME 如果玩家未与会话绑定呢？
+        session.createRoom()
         return true
     }
 
     @Route(CommandID.JoinRoom)
     suspend fun joinRoom(session: ClientSession, roomId: String): Boolean {
-        session.player?.joinRoom(roomId)
+        session.joinRoom(roomId)
         return true
     }
 
     @Route(CommandID.LeaveRoom)
     suspend fun leaveRoom(session: ClientSession): Boolean {
-        session.player?.leaveRoom()
+        session.leaveRoom()
         return true
     }
 }
