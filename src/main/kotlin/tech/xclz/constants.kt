@@ -2,24 +2,24 @@ package tech.xclz
 
 const val SERVER_VERSION = 1
 
-enum class PlayerState(name: String) : Statizable {
-    NotInRoom("NotInRoom"),
-    Manager("Manager"),
-    Member("Member"),
-    ManagerIDLE("ManagerIDLE"),
-    MemberIDLE("MemberIDLE"),
+enum class PlayerState : Statizable {
+    NotInRoom,
+    Manager,
+    Member,
+    ManagerIDLE,
+    MemberIDLE,
     ;
 
-    override fun state() = this.name
+    override fun state() = name
 }
 
-enum class PlayerAction(name: String) : Actionizable {
-    connect("connect"),
-    create("create"),
-    join("joinRoom"),
-    disconnect("disconnect"),
-    leave("leave"),
+enum class PlayerAction : Actionizable {
+    connect,
+    create,
+    join,
+    disconnect,
+    leave,
     ;
 
-    override fun action() = this.name
+    override fun action() = name
 }

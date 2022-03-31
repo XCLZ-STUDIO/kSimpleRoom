@@ -8,13 +8,11 @@ interface Actionizable {
     fun action(): String
 }
 
-enum class DefaultState(name: String) : Statizable {
+enum class DefaultState(private val value: String) : Statizable {
     Start("*"),
     End("*");
 
-    override fun state(): String {
-        return this.name
-    }
+    override fun state() = value
 }
 
 class State(val name: String, private val machine: StateMachine) {
@@ -40,7 +38,9 @@ class State(val name: String, private val machine: StateMachine) {
     fun on(action: Actionizable) = on(action.action())
 
     override fun equals(other: Any?): Boolean {
-        return (other is String && other == name) || (other is State && other.name == name)
+        return (other is String && other == name)
+                || (other is State && other.name == name)
+                || (other is Statizable && other.state() == name)
     }
 
     override fun toString(): String {
@@ -53,7 +53,7 @@ class State(val name: String, private val machine: StateMachine) {
 }
 
 class StateMachine {
-    val initState by lazy { state("*") }  // current state
+    val initState by lazy { state(DefaultState.Start.state()) }  // current state
 
     private val states = mutableMapOf<String, State>()
 
