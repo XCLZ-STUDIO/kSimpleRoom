@@ -60,58 +60,57 @@ object TCPRouter {
     }
 }
 
-suspend fun server() {
-    val selectorManager = ActorSelectorManager(Dispatchers.IO)
-    val serverSocket = aSocket(selectorManager).tcp().bind("127.0.0.1", 9998)
-    while (true) {
-        val socket = serverSocket.accept()
-        CoroutineScope(currentCoroutineContext()).launch {
-            val receiveChannel = socket.openReadChannel()
-            val sendChannel = socket.openWriteChannel(autoFlush = true)
+class RoomServer(// 构造函数
+    var hostname: String = "0.0.0.0", var port: Int = 9999
+) {
+    var readyToConnect = false
 
-            while (true) {
-                val id = receiveChannel.readUShort()
-                val cmd = CommandID.from(id)
+    suspend fun start() {
+        val selectorManager = ActorSelectorManager(Dispatchers.IO)
+        val serverSocket = aSocket(selectorManager).tcp().bind(hostname, port)
+        readyToConnect = true
+        while (true) {
+            val socket = serverSocket.accept()
+            CoroutineScope(currentCoroutineContext()).launch {
+                val receiveChannel = socket.openReadChannel()
+                val sendChannel = socket.openWriteChannel(autoFlush = true)
 
-                TCPRouter.commands[cmd]?.let { function ->
-                    val instanceParam = function.instanceParameter ?: return@let
-                    val arguments = mutableMapOf<KParameter, Any>(
-                        instanceParam to TCPRouter
-                    )
+                while (true) {
+                    val id = receiveChannel.readUShort()
+                    val cmd = CommandID.from(id)
 
-                    for (parameter in function.valueParameters) {
-                        val type = parameter.type.classifier as KClass<*>
-                        val value: Any = when (type) {
-                            ByteReadChannel::class -> receiveChannel
-                            UShort::class -> receiveChannel.readUShort()
-                            UInt::class -> receiveChannel.readUInt()
-                            String::class -> receiveChannel.readString(receiveChannel.readInt())
-                            else -> throw IllegalArgumentException("Unsupported type: $type")
+                    TCPRouter.commands[cmd]?.let { function ->
+                        val instanceParam = function.instanceParameter ?: return@let
+                        val arguments = mutableMapOf<KParameter, Any>(
+                            instanceParam to TCPRouter
+                        )
+
+                        for (parameter in function.valueParameters) {
+                            val type = parameter.type.classifier as KClass<*>
+                            val value: Any = when (type) {
+                                ByteReadChannel::class -> receiveChannel
+                                UShort::class -> receiveChannel.readUShort()
+                                UInt::class -> receiveChannel.readUInt()
+                                String::class -> receiveChannel.readString(receiveChannel.readInt())
+                                else -> throw IllegalArgumentException("Unsupported type: $type")
+                            }
+                            arguments[parameter] = value
                         }
-                        arguments[parameter] = value
-                    }
 
-                    function.callSuspendBy(arguments)
+                        function.callSuspendBy(arguments)
+                    }
                 }
             }
         }
     }
+
 }
 
-suspend fun client() {
-    val selectorManager = ActorSelectorManager(Dispatchers.IO)
-    val socket = aSocket(selectorManager).tcp().connect("127.0.0.1", 9998)
-
-    val receiveChannel = socket.openReadChannel()
-    val sendChannel = socket.openWriteChannel(autoFlush = true)
-
-    sendChannel.writeUShort(CommandID.Version.id)
-    sendChannel.writeString("abcdefg")
-}
 
 fun main() {
     runBlocking {
-        launch { server() }
-        client()
+        launch {
+            RoomServer().start()
+        }
     }
 }
