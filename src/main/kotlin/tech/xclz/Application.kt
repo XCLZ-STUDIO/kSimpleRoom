@@ -8,9 +8,9 @@ class RoomServer(// 构造函数
     var hostname: String = "0.0.0.0", var port: Int = 9999
 ) {
     val players = mutableMapOf<String, Player>()
-    val rooms = mutableMapOf<String, Room>()
+    val rooms = mutableMapOf<RoomID, Room>()
 
-    fun room(code: String) = rooms[code] ?: Room(code).also { rooms[code] = it }
+    fun room(code: RoomID) = rooms[code] ?: Room(code).also { rooms[code] = it }
     fun player(deviceId: String) = players[deviceId] ?: Player(deviceId).also { players[deviceId] = it }
 
     suspend fun start() {
