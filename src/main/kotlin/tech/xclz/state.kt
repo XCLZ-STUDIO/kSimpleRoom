@@ -17,8 +17,9 @@ class State(val name: String, val machine: StateMachine) {
 }
 
 class StateMachine {
-    private val states = mutableMapOf<String, State>()
     var state = state("*")  // current state
+
+    private val states = mutableMapOf<String, State>()
 
     fun state(name: String) = states[name] ?: State(name, this).also { states[name] = it }
 
