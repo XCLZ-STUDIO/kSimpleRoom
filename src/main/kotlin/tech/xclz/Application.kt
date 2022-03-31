@@ -79,6 +79,7 @@ abstract class Router {
                 Int::class -> session.sendChannel.writeInt(result as Int)
                 UShort::class -> session.sendChannel.writeUShort(result as UShort)
                 String::class -> session.sendChannel.writeString(result as String)
+                Unit::class -> Unit
                 else -> throw IllegalArgumentException("Unsupported type: $type")
             }
         }
