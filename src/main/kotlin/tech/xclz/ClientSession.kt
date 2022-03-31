@@ -44,7 +44,7 @@ class ClientSession(
     }
 
     fun createRoom() {
-        val code = "XXXX"   //FIXME 随机生成房间号
+        val code = RoomIDManager.getRoomID()
         val room = server.room(code)
 
         //FIXME 如果玩家未与会话绑定呢？
@@ -56,7 +56,7 @@ class ClientSession(
         state.on("create")
     }
 
-    fun joinRoom(code: String) {
+    fun joinRoom(code: RoomID) {
         //FIXME 如果玩家未与会话绑定呢？
         player?.let { player ->
             player.room = server.room(code).also {

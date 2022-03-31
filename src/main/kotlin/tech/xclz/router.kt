@@ -78,13 +78,13 @@ object TCPRouter : Router() {
     }
 
     @Route(CommandID.CreateRoom)
-    suspend fun createRoom(session: ClientSession, roomId: String): Boolean {
+    suspend fun createRoom(session: ClientSession, roomId: RoomID): Boolean {
         session.createRoom()
         return true
     }
 
     @Route(CommandID.JoinRoom)
-    suspend fun joinRoom(session: ClientSession, roomId: String): Boolean {
+    suspend fun joinRoom(session: ClientSession, roomId: RoomID): Boolean {
         session.joinRoom(roomId)
         return true
     }
