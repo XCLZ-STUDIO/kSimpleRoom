@@ -10,7 +10,9 @@ enum class CommandID(val id: UShort) {
     Version(0x0001u),
     CreateRoom(0x0002u),
     JoinRoom(0x0003u),
-    LeaveRoom(0x0004u);
+    LeaveRoom(0x0004u),
+    PlayNote(0x0005u),
+    StopNote(0x0006u);
 
     companion object {
         fun from(value: UShort) = values().first { it.id == value }
@@ -53,6 +55,7 @@ abstract class Router {
             val result = function.callSuspendBy(arguments)
             val type = function.returnType.classifier as KClass<*>
             when (type) {
+                Boolean::class -> session.sendChannel.writeByte(if (result as Boolean) 1 else 0)
                 Int::class -> session.sendChannel.writeInt(result as Int)
                 UShort::class -> session.sendChannel.writeUShort(result as UShort)
                 String::class -> session.sendChannel.writeString(result as String)
@@ -60,5 +63,35 @@ abstract class Router {
                 else -> throw IllegalArgumentException("Unsupported type: $type")
             }
         }
+    }
+}
+
+@Suppress("unused", "RedundantSuspendModifier", "UNUSED_PARAMETER")
+object TCPRouter : Router() {
+    @Route(CommandID.Version)
+    suspend fun version(session: ClientSession, deviceId: String): Int {
+        if (deviceId in session.server.players) {
+            TODO("Already in room, ready to recover the connection")
+        }
+        session.connect(deviceId)    //bind player to session
+        return SERVER_VERSION
+    }
+
+    @Route(CommandID.CreateRoom)
+    suspend fun createRoom(session: ClientSession, roomId: String): Boolean {
+        session.createRoom()
+        return true
+    }
+
+    @Route(CommandID.JoinRoom)
+    suspend fun joinRoom(session: ClientSession, roomId: String): Boolean {
+        session.joinRoom(roomId)
+        return true
+    }
+
+    @Route(CommandID.LeaveRoom)
+    suspend fun leaveRoom(session: ClientSession): Boolean {
+        session.leaveRoom()
+        return true
     }
 }
