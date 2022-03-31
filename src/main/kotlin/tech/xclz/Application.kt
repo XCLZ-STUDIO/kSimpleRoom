@@ -41,8 +41,7 @@ suspend fun ByteReadChannel.readString(size: Int, charset: Charset = Charsets.UT
 
 annotation class Route(val cmd: CommandID)
 
-@Suppress("unused", "RedundantSuspendModifier", "UNUSED_PARAMETER")
-object TCPRouter {
+abstract class Router {
     val commands: MutableMap<CommandID, KFunction<*>> = mutableMapOf()
 
     init {
@@ -53,9 +52,12 @@ object TCPRouter {
             }
         }
     }
+}
 
+@Suppress("unused", "RedundantSuspendModifier", "UNUSED_PARAMETER")
+object TCPRouter: Router() {
     @Route(CommandID.Version)
-    suspend fun version(receiveChannel: ByteReadChannel, deviceId: String) {
+    suspend fun version(deviceId: String) {
         println("收到deviceId: $deviceId")
     }
 }
@@ -97,7 +99,14 @@ class RoomServer(// 构造函数
                             arguments[parameter] = value
                         }
 
-                        function.callSuspendBy(arguments)
+                        val result = function.callSuspendBy(arguments)
+                        val type = function.returnType.classifier as KClass<*>
+                        when (type) {
+                            Int::class -> sendChannel.writeInt(result as Int)
+                            UShort::class -> sendChannel.writeUShort(result as UShort)
+                            String::class -> sendChannel.writeString(result as String)
+                            else -> throw IllegalArgumentException("Unsupported type: $type")
+                        }
                     }
                 }
             }
