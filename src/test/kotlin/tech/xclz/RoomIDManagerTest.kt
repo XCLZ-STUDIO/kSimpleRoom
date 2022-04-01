@@ -22,10 +22,10 @@ class RoomIDManagerTest {
     fun testRoomIDManager() {
         val roomIDNum = 100
 
-        var roomIDSet = setOf<RoomID>()
+        val roomIDSet = mutableSetOf<RoomID>()
 
         (0 until roomIDNum).forEach { _ ->
-            roomIDSet = roomIDSet.plusElement(RoomIDManager.getRoomID())
+            roomIDSet.add(RoomIDManager.getRoomID())
         }
 
         println(roomIDSet)
