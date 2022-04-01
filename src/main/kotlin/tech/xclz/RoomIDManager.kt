@@ -31,12 +31,10 @@ object RoomIDManager {
 
     init {
         val totalRoomIDNum = ROOM_ID_CHAR_SET.length.toDouble().pow(ROOM_ID_LENGTH).toInt()
-        runBlocking {
-            (0..totalRoomIDNum).forEach {
-                launch { roomIDs.add(RoomID(it)) } // 启动一个协程来添加每个房间ID
-            }
-        }
 
+        (0..totalRoomIDNum).forEach {
+            roomIDs.add(RoomID(it))
+        }
         roomIDs.shuffle()
     }
 
