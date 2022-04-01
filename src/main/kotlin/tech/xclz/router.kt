@@ -47,6 +47,7 @@ abstract class Router {
                     UShort::class -> session.receiveChannel.readUShort()
                     UInt::class -> session.receiveChannel.readUInt()
                     String::class -> session.receiveChannel.readString(session.receiveChannel.readInt())
+                    DeviceID::class -> DeviceID(session.receiveChannel.readString(session.receiveChannel.readInt()))
                     else -> throw IllegalArgumentException("Unsupported type: $type")
                 }
                 arguments[param] = value
@@ -69,8 +70,8 @@ abstract class Router {
 @Suppress("unused", "RedundantSuspendModifier", "UNUSED_PARAMETER")
 object TCPRouter : Router() {
     @Route(CommandID.Version)
-    suspend fun version(session: ClientSession, deviceId: String): Int {
-        if (deviceId in session.server.players) {
+    suspend fun version(session: ClientSession, deviceId: DeviceID): Int {
+        if (deviceId in session.server) {
             TODO("Already in room, ready to recover the connection")
         }
         session.connect(deviceId)    //bind player to session

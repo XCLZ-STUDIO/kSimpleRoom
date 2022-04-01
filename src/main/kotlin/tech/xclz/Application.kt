@@ -13,14 +13,14 @@ import kotlinx.coroutines.channels.produce
 class RoomServer(// 构造函数
     var hostname: String = "0.0.0.0", var port: Int = 9999
 ) {
-    val players = mutableMapOf<String, Player>()
-    val rooms = mutableMapOf<RoomID, Room>()
+    protected val players = mutableMapOf<DeviceID, Player>()
+    private val rooms = mutableMapOf<RoomID, Room>()
 
-    lateinit var sockets: ReceiveChannel<Socket>
+    private lateinit var sockets: ReceiveChannel<Socket>
     private var serverSocket: ServerSocket
 
     fun room(code: RoomID) = rooms[code] ?: Room(code).also { rooms[code] = it }
-    fun player(deviceId: String) = players[deviceId] ?: Player(deviceId).also { players[deviceId] = it }
+    fun player(deviceId: DeviceID) = players[deviceId] ?: Player(deviceId).also { players[deviceId] = it }
 
     init {
         val selectorManager = ActorSelectorManager(Dispatchers.IO)
@@ -68,6 +68,13 @@ class RoomServer(// 构造函数
             }
         }
     }
+
+    // 判断玩家是否已连接服务器
+    operator fun contains(deviceId: DeviceID): Boolean {
+        return deviceId in players
+    }
+
+
 }
 
 

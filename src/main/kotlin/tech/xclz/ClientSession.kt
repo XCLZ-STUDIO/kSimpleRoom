@@ -38,7 +38,7 @@ class ClientSession(
     var state = playerStateMachine.initState
 
     //bind a player to self
-    fun connect(deviceId: String) {
+    fun connect(deviceId: DeviceID) {
         this.player = server.player(deviceId).also { player ->
             player.bindSession(this)
         }

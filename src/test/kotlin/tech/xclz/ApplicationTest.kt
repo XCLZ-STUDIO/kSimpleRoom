@@ -46,7 +46,7 @@ class ApplicationTest {
             launch {
                 delay(5000)
                 serverJob.cancel()
-//                serverJob.join()
+                serverJob.join()
             }
         }
     }
