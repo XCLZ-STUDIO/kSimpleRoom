@@ -1,5 +1,7 @@
 package tech.xclz
 
+import tech.xclz.core.RoomID
+
 class Room(val code: RoomID) {
     private val startTime = System.currentTimeMillis()
     private val players = mutableListOf<Player>()

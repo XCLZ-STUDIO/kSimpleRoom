@@ -1,13 +1,15 @@
-@file:OptIn(ExperimentalCoroutinesApi::class, ExperimentalCoroutinesApi::class)
+//@file:OptIn(ExperimentalCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 
 package tech.xclz
 
 import io.ktor.network.sockets.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import tech.xclz.core.BasicTCPServer
+import tech.xclz.core.RoomID
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class RoomServer(var hostname: String = "0.0.0.0", var port: Int = 9999) :
     BasicTCPServer(hostname, port) {
     private val players = mutableMapOf<DeviceID, Player>()
@@ -17,21 +19,18 @@ class RoomServer(var hostname: String = "0.0.0.0", var port: Int = 9999) :
     fun player(deviceId: DeviceID) = players[deviceId] ?: Player(deviceId).also { players[deviceId] = it }
 
     suspend fun start() {
-        produceSocketBy { server, producer ->
-            val socket = server.accept()
-            producer.send(socket)
-        }
+        coroutineScope {
+            produceSocketBy { server, producer ->
+                val socket = server.accept()
+                producer.send(socket)
+            }
 
-        consumeSocketWith { socket ->
-            val receiveChannel = socket.openReadChannel()
-            val sendChannel = socket.openWriteChannel(autoFlush = true)
-            val session = ClientSession(this@RoomServer, socket, receiveChannel, sendChannel)
+            consumeSocketWith { socket ->
+                val receiveChannel = socket.openReadChannel()
+                val sendChannel = socket.openWriteChannel(autoFlush = true)
+                val session = ClientSession(this@RoomServer, socket, receiveChannel, sendChannel)
 
-            while (true) {
-                val id = receiveChannel.readUShort()
-                val cmd = CommandID.from(id)
-
-                TCPRouter.dispatch(session, cmd)
+                TCPRouter.dispatch(session)
             }
         }
     }
@@ -45,8 +44,6 @@ class RoomServer(var hostname: String = "0.0.0.0", var port: Int = 9999) :
 
 fun main() {
     runBlocking {
-        launch {
-            RoomServer().start()
-        }
+        RoomServer().start()
     }
 }

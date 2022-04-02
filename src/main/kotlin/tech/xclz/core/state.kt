@@ -1,4 +1,4 @@
-package tech.xclz
+package tech.xclz.core
 
 interface Statizable {
     fun state(): String

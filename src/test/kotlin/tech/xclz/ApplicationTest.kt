@@ -6,6 +6,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import tech.xclz.core.CommandType
+import tech.xclz.core.RoomIDManager
+import tech.xclz.core.readCommandType
+import tech.xclz.core.writeCommandType
+import tech.xclz.utils.readUShort
+import tech.xclz.utils.writeString
+import tech.xclz.utils.writeUShort
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -22,11 +29,15 @@ class ApplicationTest {
             val receiveChannel = socket.openReadChannel()
             val sendChannel = socket.openWriteChannel(autoFlush = true)
 
-            sendChannel.writeUShort(CommandID.Version.id)
+            sendChannel.writeCommandType(CommandType.GetVersion)
+            sendChannel.writeUShort(1u)
             sendChannel.writeString(deviceID)
-            val result = receiveChannel.readInt()
-            assertEquals(SERVER_VERSION, result)
-            println("client: $deviceID")
+
+            val type = receiveChannel.readCommandType()
+            val askId = receiveChannel.readUShort()
+            val version = receiveChannel.readUShort()
+            println("$deviceID type=$type askId=$askId version=$version")
+            assertEquals(SERVER_VERSION, version.toInt())
         }
 
         val server = RoomServer(hostname = HOST_NAME, port = PORT)
@@ -37,17 +48,16 @@ class ApplicationTest {
             }
             delay(100)
 
-            (1..300).forEach {
-                launch {
-                    client(RoomIDManager.getRoomID().toString())
+            runBlocking {
+                repeat(3) {
+                    launch {
+                        client(RoomIDManager.getRoomID().toString())
+                    }
                 }
             }
 
-            launch {
-                delay(5000)
-                serverJob.cancel()
-                serverJob.join()
-            }
+            serverJob.cancel()
+            serverJob.join()
         }
     }
 }

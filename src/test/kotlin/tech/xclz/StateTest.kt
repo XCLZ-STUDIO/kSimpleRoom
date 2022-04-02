@@ -4,7 +4,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import tech.xclz.PlayerState.*
 import tech.xclz.PlayerAction.*
-import tech.xclz.DefaultState.*
+import tech.xclz.core.DefaultState.*
+import tech.xclz.core.buildStateMachine
 
 
 class StateTest {

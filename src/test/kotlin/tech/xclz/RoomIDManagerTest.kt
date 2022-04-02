@@ -1,5 +1,7 @@
 package tech.xclz
 
+import tech.xclz.core.RoomID
+import tech.xclz.core.RoomIDManager
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

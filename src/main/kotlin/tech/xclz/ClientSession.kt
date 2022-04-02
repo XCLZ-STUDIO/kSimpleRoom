@@ -2,9 +2,15 @@ package tech.xclz
 
 import io.ktor.network.sockets.*
 import io.ktor.utils.io.*
-import tech.xclz.PlayerState.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import tech.xclz.PlayerAction.*
-import tech.xclz.DefaultState.*
+import tech.xclz.PlayerState.*
+import tech.xclz.core.DefaultState.End
+import tech.xclz.core.DefaultState.Start
+import tech.xclz.core.RoomID
+import tech.xclz.core.RoomIDManager
+import tech.xclz.core.buildStateMachine
 
 val playerStateMachine = buildStateMachine {
     Start by {
@@ -36,6 +42,8 @@ class ClientSession(
 ) {
     var player: Player? = null
     var state = playerStateMachine.initState
+    val commandMutex = Mutex()
+    val returnMutex = Mutex()
 
     //bind a player to self
     fun connect(deviceId: DeviceID) {
@@ -75,4 +83,7 @@ class ClientSession(
         }
         state.on(leave)
     }
+
+    suspend inline fun <T> withCommandLock(action: () -> T): T = commandMutex.withLock(action = action)
+    suspend inline fun <T> withReturnLock(action: () -> T): T = returnMutex.withLock(action = action)
 }
