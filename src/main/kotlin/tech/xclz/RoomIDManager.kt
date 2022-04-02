@@ -10,6 +10,8 @@ const val ROOM_ID_LENGTH = 4
 class RoomID(private val id: Int) {
     private val idString: String = generateRoomID(id)
 
+    constructor(idString: String) : this(idString.toInt())
+
     override fun toString(): String {
         return idString
     }

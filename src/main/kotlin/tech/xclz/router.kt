@@ -46,9 +46,10 @@ abstract class Router {
                     ClientSession::class -> session
                     UShort::class -> session.receiveChannel.readUShort()
                     UInt::class -> session.receiveChannel.readUInt()
-                    String::class -> session.receiveChannel.readString(session.receiveChannel.readInt())
-                    DeviceID::class -> DeviceID(session.receiveChannel.readString(session.receiveChannel.readInt()))
-                    else -> throw IllegalArgumentException("Unsupported type: $type")
+                    String::class -> session.receiveChannel.readString()
+                    DeviceID::class -> DeviceID(session.receiveChannel.readString())
+                    RoomID::class -> RoomID(session.receiveChannel.readString())
+                    else -> handleOtherReadTypes(session, type)
                 }
                 arguments[param] = value
             }
@@ -60,10 +61,20 @@ abstract class Router {
                 Int::class -> session.sendChannel.writeInt(result as Int)
                 UShort::class -> session.sendChannel.writeUShort(result as UShort)
                 String::class -> session.sendChannel.writeString(result as String)
+                DeviceID::class -> session.sendChannel.writeString((result as DeviceID).toString())
+                RoomID::class -> session.sendChannel.writeString((result as RoomID).toString())
                 Unit::class -> Unit
-                else -> throw IllegalArgumentException("Unsupported type: $type")
+                else -> handleOtherWriteTypes(session, type)
             }
         }
+    }
+
+    protected open suspend fun handleOtherReadTypes(session: ClientSession, type: KClass<*>) {
+        throw IllegalArgumentException("Unsupported type: $type")
+    }
+
+    protected open suspend fun handleOtherWriteTypes(session: ClientSession, type: KClass<*>) {
+        throw IllegalArgumentException("Unsupported type: $type")
     }
 }
 

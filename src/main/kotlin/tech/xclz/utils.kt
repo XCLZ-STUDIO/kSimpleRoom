@@ -22,4 +22,5 @@ suspend fun ByteReadChannel.readBytes(size: Int): ByteArray {
 
 suspend fun ByteReadChannel.readString(size: Int, charset: Charset = Charsets.UTF_8): String =
     this.readBytes(size).toString(charset)
-
+suspend fun ByteReadChannel.readString(charset: Charset = Charsets.UTF_8): String =
+    this.readString(this.readInt(), charset)
