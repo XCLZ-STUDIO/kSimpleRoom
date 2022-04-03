@@ -3,7 +3,7 @@ package tech.xclz
 import tech.xclz.core.Actionizable
 import tech.xclz.core.Statizable
 
-const val SERVER_VERSION = 1
+const val SERVER_VERSION: Short = 1
 
 enum class PlayerState : Statizable {
     NotInRoom,

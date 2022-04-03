@@ -6,11 +6,12 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import tech.xclz.PlayerAction.*
 import tech.xclz.PlayerState.*
+import tech.xclz.core.Actionizable
 import tech.xclz.core.DefaultState.End
 import tech.xclz.core.DefaultState.Start
-import tech.xclz.core.RoomID
 import tech.xclz.core.RoomIDManager
 import tech.xclz.core.buildStateMachine
+import tech.xclz.utils.logger
 
 val playerStateMachine = buildStateMachine {
     Start by {
@@ -42,20 +43,23 @@ class ClientSession(
 ) {
     var player: Player? = null
     var state = playerStateMachine.initState
-    val commandMutex = Mutex()
-    val returnMutex = Mutex()
+    val receiveMutex = Mutex()
+    val sendMutex = Mutex()
+    val room: Room?
+        get() = player?.room
 
     //bind a player to self
-    fun connect(deviceId: DeviceID) {
-        this.player = server.player(deviceId).also { player ->
-            player.bindSession(this)
-        }
-        state.on(connect)
+    fun connect(deviceID: DeviceID) {
+        val player = server.player(deviceID)
+        player.bindSession(this)
+        this.player = player
+        stateOn(connect)
     }
 
-    fun createRoom() {
-        val code = RoomIDManager.getRoomID()
-        val room = server.room(code)
+    fun createRoom(): Room? {
+        logger.debug { "[${player?.deviceId}] 开始创建房间" }
+        val roomID = RoomIDManager.getRoomID()
+        val room = server.room(roomID)
 
         //FIXME 如果玩家未与会话绑定呢？
         player?.let {
@@ -63,17 +67,18 @@ class ClientSession(
             it.room = room
         }
 
-        state.on(create)
+        stateOn(create)
+        logger.debug { "[${player?.deviceId}] 创建房间完成" }
+        return player?.room
     }
 
-    fun joinRoom(code: RoomID) {
+    fun joinRoom(room: Room) {
         //FIXME 如果玩家未与会话绑定呢？
         player?.let { player ->
-            player.room = server.room(code).also {
-                it.addPlayer(player)
-            }
+            room.addPlayer(player)
+            player.room = room
         }
-        state.on(join)
+        stateOn(join)
     }
 
     fun leaveRoom() {
@@ -81,9 +86,18 @@ class ClientSession(
             player.room?.removePlayer(player)
             player.room = null
         }
-        state.on(leave)
+        stateOn(leave)
     }
 
-    suspend inline fun <T> withCommandLock(action: () -> T): T = commandMutex.withLock(action = action)
-    suspend inline fun <T> withReturnLock(action: () -> T): T = returnMutex.withLock(action = action)
+    suspend inline fun <T> withReceiveLock(action: (ByteReadChannel) -> T): T =
+        receiveMutex.withLock { action(receiveChannel) }
+
+    suspend inline fun <T> withSendLock(action: (ByteWriteChannel) -> T): T =
+        sendMutex.withLock {
+            action(sendChannel).also { sendChannel.flush() }
+        }
+
+    private fun stateOn(action: Actionizable) {
+        state = state.on(action)
+    }
 }

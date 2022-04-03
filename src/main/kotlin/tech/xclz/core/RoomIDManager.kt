@@ -6,8 +6,8 @@ import kotlin.math.pow
 const val ROOM_ID_CHAR_SET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 const val ROOM_ID_LENGTH = 4
 
-data class RoomID(private val id: Int) {
-    private val idString: String = idToString(id)
+data class RoomID(val value: Int) {
+    private val idString: String = idToString(value)
 
     override fun toString(): String = idString
 
@@ -25,6 +25,7 @@ data class RoomID(private val id: Int) {
 }
 
 suspend fun ByteReadChannel.readRoomID(): RoomID = RoomID(readInt())
+suspend fun ByteWriteChannel.writeRoomID(roomID: RoomID) = writeInt(roomID.value)
 
 
 object RoomIDManager {

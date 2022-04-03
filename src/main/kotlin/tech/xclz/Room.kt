@@ -2,9 +2,11 @@ package tech.xclz
 
 import tech.xclz.core.RoomID
 
-class Room(val code: RoomID) {
+class Room(val id: RoomID) {
     private val startTime = System.currentTimeMillis()
-    private val players = mutableListOf<Player>()
+    val players = mutableListOf<Player>()
+    val time: Long
+        get() = System.currentTimeMillis() - startTime
 
     fun addPlayer(player: Player) {
         players.add(player)

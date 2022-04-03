@@ -8,6 +8,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import tech.xclz.core.BasicTCPServer
 import tech.xclz.core.RoomID
+import tech.xclz.utils.logger
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class RoomServer(var hostname: String = "0.0.0.0", var port: Int = 9999) :
@@ -18,29 +19,30 @@ class RoomServer(var hostname: String = "0.0.0.0", var port: Int = 9999) :
     fun room(code: RoomID) = rooms[code] ?: Room(code).also { rooms[code] = it }
     fun player(deviceId: DeviceID) = players[deviceId] ?: Player(deviceId).also { players[deviceId] = it }
 
-    suspend fun start() {
-        coroutineScope {
-            produceSocketBy { server, producer ->
-                val socket = server.accept()
-                producer.send(socket)
-            }
+    suspend fun start() = coroutineScope {
+        produceSocketBy { server, producer ->
+            val socket = server.accept()
+            producer.send(socket)
+        }
 
-            consumeSocketWith { socket ->
-                val receiveChannel = socket.openReadChannel()
-                val sendChannel = socket.openWriteChannel(autoFlush = true)
-                val session = ClientSession(this@RoomServer, socket, receiveChannel, sendChannel)
-
-                TCPRouter.dispatch(session)
+        consumeSocketWith { socket ->
+            logger.debug {
+                val port = (socket.remoteAddress as InetSocketAddress).port
+                "Socket已连接，端口: $port"
             }
+            val receiveChannel = socket.openReadChannel()
+            val sendChannel = socket.openWriteChannel(autoFlush = true)
+            logger.debug("已打开读写通道")
+            val session = ClientSession(this@RoomServer, socket, receiveChannel, sendChannel)
+
+            logger.debug("开始分发路由")
+            TCPRouter.dispatch(session)
         }
     }
 
     // 判断玩家是否已连接服务器
-    operator fun contains(deviceId: DeviceID): Boolean {
-        return deviceId in players
-    }
+    operator fun contains(deviceID: DeviceID): Boolean = players.contains(deviceID)
 }
-
 
 fun main() {
     runBlocking {

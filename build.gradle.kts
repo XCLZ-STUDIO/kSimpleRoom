@@ -23,11 +23,12 @@ repositories {
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
-    implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
+//    implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
 //    implementation("io.ktor:ktor-server-netty-jvm:ktorVersion")
     implementation("io.ktor:ktor-network:$ktorVersion")
+    implementation("io.github.microutils:kotlin-logging-jvm:2.1.21")
 
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
-    testImplementation("io.ktor:ktor-server-tests-jvm:$ktorVersion")
+//    testImplementation("io.ktor:ktor-server-tests-jvm:$ktorVersion")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
 }
