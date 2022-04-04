@@ -34,11 +34,11 @@ object TCPRouter : Router() {
     }
 
     @Route(CommandType.JoinRoom)
-    suspend fun joinRoom(session: ClientSession, roomID: RoomID): Int {
+    suspend fun joinRoom(session: ClientSession, roomID: RoomID): Long {
         logger.debug { "[${session.player?.deviceId}] 服务器正在执行加入房间命令" }
         val room = session.server.room(roomID)
         session.joinRoom(room)
-        return room.players.size
+        return room.time
     }
 
     @Route(CommandType.LeaveRoom)

@@ -3,11 +3,10 @@
 package tech.xclz
 
 import io.ktor.network.sockets.*
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import tech.xclz.core.BasicTCPServer
 import tech.xclz.core.RoomID
+import tech.xclz.core.RoomIDManager
 import tech.xclz.utils.logger
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -20,6 +19,10 @@ class RoomServer(var hostname: String = "0.0.0.0", var port: Int = 9999) :
     fun player(deviceId: DeviceID) = players[deviceId] ?: Player(deviceId).also { players[deviceId] = it }
 
     suspend fun start() = coroutineScope {
+        withContext(Dispatchers.Default) {
+            RoomIDManager   // 初始化房间ID管理器
+        }
+
         produceSocketBy { server, producer ->
             val socket = server.accept()
             producer.send(socket)
@@ -46,6 +49,8 @@ class RoomServer(var hostname: String = "0.0.0.0", var port: Int = 9999) :
 
 fun main() {
     runBlocking {
-        RoomServer().start()
+        withContext(Dispatchers.IO) {
+            RoomServer().start()
+        }
     }
 }

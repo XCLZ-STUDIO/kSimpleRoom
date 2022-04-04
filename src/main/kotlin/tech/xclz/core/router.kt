@@ -148,8 +148,8 @@ abstract class Router {
                     Unit::class -> Unit
                     Int::class -> sendChannel.writeInt(result as Int)
                     Byte::class -> sendChannel.writeByte(result as Byte)
+                    Long::class -> sendChannel.writeLong(result as Long)
                     Short::class -> sendChannel.writeShort(result as Short)
-                    UShort::class -> sendChannel.writeUShort(result as UShort)
                     String::class -> sendChannel.writeString(result as String)
                     RoomID::class -> sendChannel.writeRoomID(result as RoomID)
                     Boolean::class -> sendChannel.writeBoolean(result as Boolean)

@@ -59,7 +59,8 @@ class ClientSession(
     fun createRoom(): Room? {
         logger.debug { "[${player?.deviceId}] 开始创建房间" }
         val roomID = RoomIDManager.getRoomID()
-        val room = server.room(roomID)
+        logger.debug { "[${player?.deviceId}] 获取到房间ID: $roomID" }
+        val room = server.room(roomID) //FIXME 如果该房间已存在呢？
 
         //FIXME 如果玩家未与会话绑定呢？
         player?.let {
@@ -68,14 +69,14 @@ class ClientSession(
         }
 
         stateOn(create)
-        logger.debug { "[${player?.deviceId}] 创建房间完成" }
+        logger.info { "[${player?.deviceId}] 创建房间完成，房间起始时间: ${room.startTime}" }
         return player?.room
     }
 
     fun joinRoom(room: Room) {
         //FIXME 如果玩家未与会话绑定呢？
         player?.let { player ->
-            room.addPlayer(player)
+            room.addPlayer(player)  //FIXME 如果该玩家已在房间中呢？或已在另一个房间中？
             player.room = room
         }
         stateOn(join)

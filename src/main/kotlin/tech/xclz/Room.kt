@@ -3,7 +3,7 @@ package tech.xclz
 import tech.xclz.core.RoomID
 
 class Room(val id: RoomID) {
-    private val startTime = System.currentTimeMillis()
+    val startTime = System.currentTimeMillis()
     val players = mutableListOf<Player>()
     val time: Long
         get() = System.currentTimeMillis() - startTime

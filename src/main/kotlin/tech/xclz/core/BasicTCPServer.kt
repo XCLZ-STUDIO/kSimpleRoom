@@ -23,14 +23,13 @@ open class BasicTCPServer(// 构造函数
         serverSocket = aSocket(selectorManager).tcp().bind(hostname, port)
     }
 
-    fun CoroutineScope.produceSocketBy(producer: suspend (server: ServerSocket, ProducerScope<Socket>) -> Unit) =
-        launch {
-            sockets = produce {
-                while (true) {
-                    producer(serverSocket, this)
-                }
+    fun CoroutineScope.produceSocketBy(producer: suspend (server: ServerSocket, ProducerScope<Socket>) -> Unit) {
+        sockets = produce {
+            while (true) {
+                producer(serverSocket, this)
             }
         }
+    }
 
     fun CoroutineScope.consumeSocketWith(consumer: suspend (socket: Socket) -> Unit) =
         launch {

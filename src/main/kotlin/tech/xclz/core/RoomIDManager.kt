@@ -1,6 +1,7 @@
 package tech.xclz.core
 
 import io.ktor.utils.io.*
+import java.util.*
 import kotlin.math.pow
 
 const val ROOM_ID_CHAR_SET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -29,7 +30,7 @@ suspend fun ByteWriteChannel.writeRoomID(roomID: RoomID) = writeInt(roomID.value
 
 
 object RoomIDManager {
-    private val roomIDs = ArrayDeque<RoomID>()
+    private val roomIDs = LinkedList<RoomID>()
 
     init {
         val totalRoomIDNum = ROOM_ID_CHAR_SET.length.toDouble().pow(ROOM_ID_LENGTH).toInt()
