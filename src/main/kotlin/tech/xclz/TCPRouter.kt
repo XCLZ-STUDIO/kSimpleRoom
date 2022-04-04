@@ -3,6 +3,7 @@ package tech.xclz
 import tech.xclz.core.*
 import tech.xclz.utils.logger
 import tech.xclz.utils.writeUByte
+import tech.xclz.utils.writeUInt
 
 
 @Suppress("unused", "RedundantSuspendModifier", "UNUSED_PARAMETER")
@@ -49,6 +50,7 @@ object TCPRouter : Router() {
     private suspend fun writeSyncMessage(session: ClientSession, message: SyncMessage) {
         session.withSendLock { sendChannel ->
             sendChannel.writeCommandType(CommandType.SendMessage)
+            sendChannel.writeUInt(message.frameID)
             sendChannel.writeMessageType(message.type)
             sendChannel.writeLong(message.time)
 

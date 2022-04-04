@@ -77,6 +77,7 @@ class Client(val deviceID: String, socket: Socket) {
         logger.debug { "[$deviceID] 客户端开始发送消息 $message" }
         withWriteLock {
             writer.writeCommandType(CommandType.SendMessage)
+            writer.writeUInt(message.frameID)
             writer.writeMessageType(message.type)
             writer.writeLong(message.time)
 
@@ -113,6 +114,7 @@ internal fun CoroutineScope.startClient(deviceID: String, action: (suspend (Clie
         if (cmdType == CommandType.SendMessage) {
             logger.debug { "[$deviceID] 客户端读取正在读取消息..." }
             client.withReadLock { reader ->
+                val frameID = reader.readUInt()
                 val type = reader.readMessageType()
                     ?: TODO("如果type为空怎么办")
                 val time = reader.readLong()
@@ -120,11 +122,11 @@ internal fun CoroutineScope.startClient(deviceID: String, action: (suspend (Clie
                 val message = when (type) {
                     MessageType.PlayNote -> {
                         val note = reader.readUByte()
-                        PlayNoteMessage(time, note)
+                        PlayNoteMessage(frameID, time, note)
                     }
                     MessageType.StopNote -> {
                         val note = reader.readUByte()
-                        StopNoteMessage(time, note)
+                        StopNoteMessage(frameID, time, note)
                     }
                 }
                 logger.info { "[$deviceID] 客户端收到服务器发来的消息：$message" }
@@ -143,7 +145,7 @@ internal fun CoroutineScope.startClient(deviceID: String, action: (suspend (Clie
             CommandType.JoinRoom -> client.reader.readInt()
             CommandType.LeaveRoom -> TODO()
             CommandType.BindDevice -> client.reader.readBoolean()
-            else -> TODO("奇怪了，不应该进入else分支的")
+            else -> TODO("奇怪了，不应该进入else分支的: $cmdType")
         }
         channel.send(result)
     }
@@ -175,11 +177,11 @@ class ApplicationTest {
                     roomIDChannel.close()
                     logger.info { "[${client.deviceID}] 关闭广播通道，开始发送音符消息" }
                     delay(200) //等待其他客户端加入房间
-                    var message = PlayNoteMessage(System.currentTimeMillis(), 33u)
+                    var message = PlayNoteMessage(1u, System.currentTimeMillis(), 33u)
                     client.sendMessage(message)
                     logger.info { "[${client.deviceID}] 已发送33音符" }
                     delay(200)
-                    message = PlayNoteMessage(System.currentTimeMillis(), 35u)
+                    message = PlayNoteMessage(2u, System.currentTimeMillis(), 35u)
                     client.sendMessage(message)
                     logger.info { "[${client.deviceID}] 已发送35音符" }
                 })

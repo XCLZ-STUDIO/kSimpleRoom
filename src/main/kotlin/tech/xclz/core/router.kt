@@ -52,13 +52,13 @@ enum class MessageType(val value: UShort) {
 suspend inline fun ByteReadChannel.readMessageType(): MessageType? = MessageType.from(readUShort())
 suspend inline fun ByteWriteChannel.writeMessageType(type: MessageType) = writeUShort(type.value)
 
-abstract class SyncMessage(val type: MessageType, val time: Long)
-class PlayNoteMessage(time: Long, val note: UByte) : SyncMessage(MessageType.PlayNote, time) {
+abstract class SyncMessage(val frameID: UInt, val type: MessageType, val time: Long)
+class PlayNoteMessage(frameID: UInt, time: Long, val note: UByte) : SyncMessage(frameID, MessageType.PlayNote, time) {
     override fun toString(): String {
         return "PlayNoteMessage(time=$time, note=$note)"
     }
 }
-class StopNoteMessage(time: Long, val note: UByte) : SyncMessage(MessageType.PlayNote, time) {
+class StopNoteMessage(frameID: UInt, time: Long, val note: UByte) : SyncMessage(frameID, MessageType.PlayNote, time) {
     override fun toString(): String {
         return "StopNoteMessage(time=$time, note=$note)"
     }
@@ -114,6 +114,7 @@ abstract class Router {
 
     private suspend fun readSyncMessage(session: ClientSession): SyncMessage {
         session.withReceiveLock { receiveChannel ->
+            val frameID = receiveChannel.readUInt()
             val type = receiveChannel.readMessageType()
                 ?: TODO("如果type为空怎么办")
             val time = receiveChannel.readLong()
@@ -121,11 +122,11 @@ abstract class Router {
             return when (type) {
                 MessageType.PlayNote -> {
                     val note = receiveChannel.readUByte()
-                    PlayNoteMessage(time, note)
+                    PlayNoteMessage(frameID, time, note)
                 }
                 MessageType.StopNote -> {
                     val note = receiveChannel.readUByte()
-                    StopNoteMessage(time, note)
+                    StopNoteMessage(frameID, time, note)
                 }
             }
         }

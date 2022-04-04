@@ -7,6 +7,7 @@ import java.nio.charset.Charset
 
 val logger = KotlinLogging.logger("tech.xclz")
 
+suspend inline fun ByteWriteChannel.writeUInt(b: UInt) = writeInt(b.toInt())
 suspend inline fun ByteWriteChannel.writeUByte(b: UByte) = writeByte(b.toByte())
 suspend inline fun ByteWriteChannel.writeUShort(s: UShort) = writeShort(s.toShort())
 suspend inline fun ByteWriteChannel.writeString(s: String) {

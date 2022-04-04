@@ -7,7 +7,7 @@
     <root level="trace">
         <appender-ref ref="STDOUT"/>
     </root>
-    <logger name="tech.xclz" level="DEBUG"/>
+    <logger name="tech.xclz" level="INFO"/>
     <logger name="org.eclipse.jetty" level="INFO"/>
     <logger name="io.netty" level="INFO"/>
 </configuration>
