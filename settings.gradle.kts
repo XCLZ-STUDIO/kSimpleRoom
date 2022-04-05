@@ -24,7 +24,7 @@ dependencyResolutionManagement {
 }
 
 
-rootProject.name = "kSimpleRoom"
+rootProject.name = "korom"
 include("protocol", "server", "client")
 
 project(":protocol").name = "korom-protocol"
